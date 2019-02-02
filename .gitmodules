@@ -1,0 +1,3 @@
+[submodule "shared_structures"]
+	path = shared_structures
+	url = https://github.com/analyzeDFIR/libadfir-structures.git
