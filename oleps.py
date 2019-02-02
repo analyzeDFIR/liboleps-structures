@@ -21,6 +21,8 @@
 ## OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 ## SOFTWARE.
 
+from construct.core import singleton
+
 try:
     from shared_structures.windows.misc import *
     from shared_structures.windows.guid import NTFSGUID
@@ -28,6 +30,7 @@ except ImportError:
     from .shared_structures.windows.misc import *
     from .shared_structures.windows.guid import NTFSGUID
 
+@singleton
 class OLEUnicodeCString(Construct):
     '''
     Class for parsing CString structures encoded as unicode
@@ -50,131 +53,7 @@ class OLEUnicodeCString(Construct):
         except:
             return CString('UTF8')._build(obj, stream, context, path)
 
-OLEDictionary = Struct(
-    'NumEntries'    / Int32ul,
-    'Entries'       / Aligned(0x04, Array(this.NumEntries, OLEDictionaryEntry))
-)
-
-OLEDictionaryEntry = Struct(
-    'PropertyIdentifier'    / OLEPropertyIdentifier,
-    'Length'                / Int,
-    'Name'                  / OLEUnicodeCString
-)
-
-OLEArrayHeader = Struct(
-    'Type'          / OLEPropertyType,
-    'NumDimensions' / Int32ul,
-    'Dimensions'    / Array(this.NumDimensions, OLEArrayDimension)
-)
-
-OLEArrayDimension = Struct(
-    'Size'          / Int32ul,
-    'IndexOffset'   / Int32sl
-)
-
-OLEVectorHeader = Struct(
-    'Length'        / Int32ul
-)
-
-OLEClipboardData = Struct(
-    'Size'          / Int32ul,
-    'Format'        / Int32ul,
-    'Content'       / Aligned(0x04, Bytes(this.Size))
-)
-
-OLEBlob = Struct(
-    'Size'          / Int32ul,
-    'Content'       / Aligned(0x04, Bytes(this.Size))
-)
-
-OLEUnicodeString = Struct(
-    'Length'        / Int32ul,
-    'Content'       / If(this.Length > 0x00, Aligned(0x04, CString('UTF16')))
-)
-
-OLEDecimal = Struct(
-    Padding(2),
-    'Scale'         / Int8ul,
-    'Sign'          / Int8ul,
-    'Hi32'          / Int32ul,
-    'Lo64'          / Int64ul
-)
-
-OLEVariantBool = Enum(Int16ul,
-    True            = 0xFFFF,
-    False           = 0x0000
-)
-
-OLEHResult = Bitwise(Struct(
-    'Severity'      / Flag,
-    'Reserved01'    / BitsInteger(1),
-    'Customer'      / Flag,
-    'NTSTATUS'      / Flag,
-    'Reserved02'    / BitsInteger(1),
-    'Facility'      / Enum(BitsInteger(11),
-        FACILITY_NULL			    = 0
-        FACILITY_RPC			    = 1
-        FACILITY_DISPATCH		    = 2
-        FACILITY_STORAGE		    = 3
-        FACILITY_ITF			    = 4
-        FACILITY_WIN32			    = 7
-        FACILITY_WINDOWS		    = 8
-        FACILITY_SSPI			    = 9
-        FACILITY_CONTROL		    = 10
-        FACILITY_CERT			    = 11
-        FACILITY_INTERNET		    = 12
-        FACILITY_MEDIASERVER		    = 13
-        FACILITY_MSMQ			    = 14
-        FACILITY_SETUPAPI		    = 15
-        FACILITY_SCARD			    = 16
-        FACILITY_COMPLUS		    = 17
-        FACILITY_AAF			    = 18
-        FACILITY_URT			    = 19
-        FACILITY_ACS			    = 20
-        FACILITY_DPLAY			    = 21
-        FACILITY_UMI			    = 22
-        FACILITY_SXS			    = 23
-        FACILITY_WINDOWS_CE		    = 24
-        FACILITY_HTTP			    = 25
-        FACILITY_USERMODE_COMMONLOG	    = 26
-        FACILITY_USERMODE_FILTER_MANAGER    = 31
-        FACILITY_BACKGROUNDCOPY		    = 32
-        FACILITY_CONFIGURATION		    = 33
-        FACILITY_STATE_MANAGEMENT	    = 34
-        FACILITY_METADIRECTORY		    = 35
-        FACILITY_WINDOWSUPDATE		    = 36
-        FACILITY_DIRECTORYSERVICE	    = 37
-        FACILITY_GRAPHICS	    	    = 38
-        FACILITY_SHELL			    = 39
-        FACILITY_TPM_SERVICES		    = 40
-        FACILITY_TPM_SOFTWARE		    = 41
-        FACILITY_PLA			    = 48
-        FACILITY_FVE			    = 49
-        FACILITY_FWP			    = 50
-        FACILITY_WINRM			    = 51
-        FACILITY_NDIS			    = 52
-        FACILITY_USERMODE_HYPERVISOR	    = 53
-        FACILITY_CMI			    = 54
-        FACILITY_USERMODE_VIRTUALIZATION    = 55
-        FACILITY_USERMODE_VOLMGR	    = 56
-        FACILITY_BCD			    = 57
-        FACILITY_USERMODE_VHD		    = 58
-        FACILITY_SDIAG			    = 60
-        FACILITY_WEBSERVICES		    = 61
-        FACILITY_WINDOWS_DEFENDER	    = 80
-        FACILITY_OPC			    = 81
-    ),
-    Code            / Bytewise(Bytes(2))
-))
-
-OLECodePageString = Struct(
-    'Size'          / Int32ul,
-    'Content'       / If(this.Size > 0x00, OLEUnicodeCString)
-)
-
-OLEDate = Float64l
-
-OLECurrency = Int64ul
+OLEPropertyIdentifier = Int32ul
 
 OLEPropertyType = Enum(Int16ul,
     VT_EMPTY            = 0x00,
@@ -249,9 +128,130 @@ OLEPropertyType = Enum(Int16ul,
     VT_ARRAY_UINT	= 0x2017
 )
 
+OLEDictionaryEntry = Struct(
+    'PropertyIdentifier'    / OLEPropertyIdentifier,
+    'Length'                / Int,
+    'Name'                  / OLEUnicodeCString
+)
+
+OLEDictionary = Struct(
+    'NumEntries'    / Int32ul,
+    'Entries'       / Aligned(0x04, Array(this.NumEntries, OLEDictionaryEntry))
+)
+
+OLEArrayDimension = Struct(
+    'Size'          / Int32ul,
+    'IndexOffset'   / Int32sl
+)
+
+OLEArrayHeader = Struct(
+    'Type'          / OLEPropertyType,
+    'NumDimensions' / Int32ul,
+    'Dimensions'    / Array(this.NumDimensions, OLEArrayDimension)
+)
+
+OLEVectorHeader = Struct(
+    'Length'        / Int32ul
+)
+
+OLEClipboardData = Struct(
+    'Size'          / Int32ul,
+    'Format'        / Int32ul,
+    'Content'       / Aligned(0x04, Bytes(this.Size))
+)
+
+OLEBlob = Struct(
+    'Size'          / Int32ul,
+    'Content'       / Aligned(0x04, Bytes(this.Size))
+)
+
+OLEUnicodeString = Struct(
+    'Length'        / Int32ul,
+    'Content'       / If(this.Length > 0x00, Aligned(0x04, CString('UTF16')))
+)
+
+OLEDecimal = Struct(
+    Padding(2),
+    'Scale'         / Int8ul,
+    'Sign'          / Int8ul,
+    'Hi32'          / Int32ul,
+    'Lo64'          / Int64ul
+)
+
+OLEVariantBool = Mapping(Int16ul, {0xFFFF:True, 0x0000: False})
+
+OLEHResult = Bitwise(Struct(
+    'Severity'      / Flag,
+    'Reserved01'    / BitsInteger(1),
+    'Customer'      / Flag,
+    'NTSTATUS'      / Flag,
+    'Reserved02'    / BitsInteger(1),
+    'Facility'      / Enum(BitsInteger(11),
+        FACILITY_NULL			    = 0,
+        FACILITY_RPC			    = 1,
+        FACILITY_DISPATCH		    = 2,
+        FACILITY_STORAGE		    = 3,
+        FACILITY_ITF			    = 4,
+        FACILITY_WIN32			    = 7,
+        FACILITY_WINDOWS		    = 8,
+        FACILITY_SSPI			    = 9,
+        FACILITY_CONTROL		    = 10,
+        FACILITY_CERT			    = 11,
+        FACILITY_INTERNET		    = 12,
+        FACILITY_MEDIASERVER		    = 13,
+        FACILITY_MSMQ			    = 14,
+        FACILITY_SETUPAPI		    = 15,
+        FACILITY_SCARD			    = 16,
+        FACILITY_COMPLUS		    = 17,
+        FACILITY_AAF			    = 18,
+        FACILITY_URT			    = 19,
+        FACILITY_ACS			    = 20,
+        FACILITY_DPLAY			    = 21,
+        FACILITY_UMI			    = 22,
+        FACILITY_SXS			    = 23,
+        FACILITY_WINDOWS_CE		    = 24,
+        FACILITY_HTTP			    = 25,
+        FACILITY_USERMODE_COMMONLOG	    = 26,
+        FACILITY_USERMODE_FILTER_MANAGER    = 31,
+        FACILITY_BACKGROUNDCOPY		    = 32,
+        FACILITY_CONFIGURATION		    = 33,
+        FACILITY_STATE_MANAGEMENT	    = 34,
+        FACILITY_METADIRECTORY		    = 35,
+        FACILITY_WINDOWSUPDATE		    = 36,
+        FACILITY_DIRECTORYSERVICE	    = 37,
+        FACILITY_GRAPHICS	    	    = 38,
+        FACILITY_SHELL			    = 39,
+        FACILITY_TPM_SERVICES		    = 40,
+        FACILITY_TPM_SOFTWARE		    = 41,
+        FACILITY_PLA			    = 48,
+        FACILITY_FVE			    = 49,
+        FACILITY_FWP			    = 50,
+        FACILITY_WINRM			    = 51,
+        FACILITY_NDIS			    = 52,
+        FACILITY_USERMODE_HYPERVISOR	    = 53,
+        FACILITY_CMI			    = 54,
+        FACILITY_USERMODE_VIRTUALIZATION    = 55,
+        FACILITY_USERMODE_VOLMGR	    = 56,
+        FACILITY_BCD			    = 57,
+        FACILITY_USERMODE_VHD		    = 58,
+        FACILITY_SDIAG			    = 60,
+        FACILITY_WEBSERVICES		    = 61,
+        FACILITY_WINDOWS_DEFENDER	    = 80,
+        FACILITY_OPC			    = 81
+    ),
+    'Code'          / Bytewise(Bytes(2))
+))
+
+OLECodePageString = Struct(
+    'Size'          / Int32ul,
+    'Content'       / If(this.Size > 0x00, OLEUnicodeCString)
+)
+
+OLEDate = Float64l
+
+OLECurrency = Int64ul
+
 OLETypedPropertyValueHeader = Struct(
     'Type'          / OLEPropertyType,
     Padding(2)
 )
-
-OLEPropertyIdentifier = Int32ul
