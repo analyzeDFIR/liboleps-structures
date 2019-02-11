@@ -178,7 +178,7 @@ OLEDecimal = Struct(
     'Lo64'          / Int64ul
 )
 
-OLEVariantBool = Mapping(Int16ul, {0xFFFF:True, 0x0000: False})
+OLEVariantBool = Mapping(Int16ul, {True: 0xFFFF, False: 0x0000})
 
 OLEHResult = Bitwise(Struct(
     'Severity'      / Flag,
